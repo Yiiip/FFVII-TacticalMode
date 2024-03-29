@@ -23,14 +23,14 @@ public class UIManager : MonoBehaviour
     public Slider atbSlider;
     public Image atbCompleteLeft;
     public Image atbCompleteRight;
+
     void Start()
     {
-
         gameScript = FindObjectOfType<TacticalModeScript>();
-        gameScript.OnAttack.AddListener(() => AttackAction());
-        gameScript.OnModificationATB.AddListener(() => UpdateSlider());
-        gameScript.OnTacticalTrigger.AddListener((x) => ShowTacticalMenu(x));
-        gameScript.OnTargetSelectTrigger.AddListener((x) => ShowTargetOptions(x));
+        gameScript.OnAttack.AddListener(AttackAction); //事件：砍敌人
+        gameScript.OnModificationATB.AddListener(UpdateSlider); //事件：
+        gameScript.OnTacticalTrigger.AddListener(ShowTacticalMenu); //事件：进入或退出战术模式
+        gameScript.OnTargetSelectTrigger.AddListener(ShowTargetOptions); //事件：
     }
 
     private void Update()
@@ -43,9 +43,11 @@ public class UIManager : MonoBehaviour
 
     public void AttackAction()
     {
-
     }
 
+    /// <summary>
+    /// 更新能量条
+    /// </summary>
     public void UpdateSlider()
     {
         atbSlider.DOComplete();
@@ -55,6 +57,10 @@ public class UIManager : MonoBehaviour
         atbCompleteRight.DOFade(gameScript.atbSlider >= 200 ? 1 : 0, .2f);
     }
 
+    /// <summary>
+    /// 显示或隐藏战术菜单
+    /// </summary>
+    /// <param name="on"></param>
     public void ShowTacticalMenu(bool on)
     {
         tacticalCanvas.DOFade(on ? 1 : 0, .15f).SetUpdate(true);
@@ -76,6 +82,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 显示目标菜单
+    /// </summary>
+    /// <param name="on"></param>
     public void ShowTargetOptions(bool on)
     {
         EventSystem.current.SetSelectedGameObject(null);

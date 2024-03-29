@@ -12,14 +12,16 @@ using DG.Tweening;
 
 public class TacticalModeScript : MonoBehaviour
 {
+    #region 消息事件用于表现层
     [HideInInspector]
-    public GameEvent OnAttack;
+    public GameEvent OnAttack; //砍敌人
     [HideInInspector]
     public GameEvent OnModificationATB;
     [HideInInspector]
-    public TacticalModeEvent OnTacticalTrigger;
+    public TacticalModeEvent OnTacticalTrigger; //进入或退出战术模式
     [HideInInspector]
     public TacticalModeEvent OnTargetSelectTrigger;
+    #endregion
 
     private MovementInput movement;
     private Animator anim;
@@ -29,11 +31,11 @@ public class TacticalModeScript : MonoBehaviour
     public float slowMotionTime = .005f;
 
     [Space]
-
-    public bool tacticalMode;
+    [Header("States")]
+    public bool tacticalMode; //是否处于战术模式
     public bool isAiming;
     public bool usingAbility;
-    public bool dashing;
+    public bool dashing; //是否冲刺中
 
     [Space]
 
@@ -69,7 +71,6 @@ public class TacticalModeScript : MonoBehaviour
     public CinemachineVirtualCamera targetCam;
 
     [Space]
-
     public Volume slowMotionVolume;
 
     public float VFXDir = 5;
@@ -78,7 +79,7 @@ public class TacticalModeScript : MonoBehaviour
 
     private void Start()
     {
-        weapon.onHit.AddListener((target) => HitTarget(target));
+        weapon.onHit.AddListener(OnWeaponHitTarget);
         movement = GetComponent<MovementInput>();
         anim = GetComponent<Animator>();
         camImpulseSource = Camera.main.GetComponent<CinemachineImpulseSource>();
@@ -86,36 +87,41 @@ public class TacticalModeScript : MonoBehaviour
 
     void Update()
     {
+        //自动记录最近的敌人，目的是在任意位置进入战术模式后可提供首选目标
         if (targets.Count > 0 && !tacticalMode && !usingAbility)
         {
             targetIndex = NearestTargetToCenter();
             aimObject.LookAt(targets[targetIndex]);
         }
 
-        //Attack
-        if ((Input.GetMouseButtonDown(0)) && !tacticalMode && !usingAbility)
+        //鼠标左键：砍敌人
+        if (Input.GetMouseButtonDown(0) && !tacticalMode && !usingAbility)
         {
-
             OnAttack.Invoke();
-
             if(!dashing)
+            {
                 //MoveTowardsTarget(targets[targetIndex]);
-            anim.SetTrigger("slash");
+                anim.SetTrigger("slash");
+            }
         }
 
-
+        //鼠标右键：战术
         if (Input.GetMouseButtonDown(1) && !usingAbility)
         {
             if (atbCount > 0 && !tacticalMode)
                 SetTacticalMode(true);
         }
 
+        //ESC键：取消单步行动
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             CancelAction();
         }
     }
 
+    /// <summary>
+    /// 转身进攻（通过按钮选择进攻对象后触发）
+    /// </summary>
     public void SpinAttack()
     {
         ModifyATB(-100);
@@ -181,7 +187,11 @@ public class TacticalModeScript : MonoBehaviour
         return Vector3.MoveTowards(position, transform.position, 1.2f);
     }
 
-    public void HitTarget(Transform x)
+    /// <summary>
+    /// 武器击打碰撞到敌人时触发
+    /// </summary>
+    /// <param name="x"></param>
+    public void OnWeaponHitTarget(Transform x)
     {
         OnModificationATB.Invoke();
 
@@ -199,6 +209,10 @@ public class TacticalModeScript : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 更改能量条
+    /// </summary>
+    /// <param name="amount">正负值</param>
     public void ModifyATB(float amount)
     {
         OnModificationATB.Invoke();
@@ -224,12 +238,19 @@ public class TacticalModeScript : MonoBehaviour
         OnModificationATB.Invoke();
     }
 
+    /// <summary>
+    /// 消耗能量条
+    /// </summary>
     public void ClearATB()
     {
         float value = (atbCount == 1) ? 0 : 1;
         atbSlider = value;
     }
 
+    /// <summary>
+    /// 设置进入或退出战术模式
+    /// </summary>
+    /// <param name="on"></param>
     public void SetTacticalMode(bool on)
     {
         movement.desiredRotationSpeed = on ? 0 : .3f;
@@ -245,8 +266,7 @@ public class TacticalModeScript : MonoBehaviour
 
         camImpulseSource.m_ImpulseDefinition.m_AmplitudeGain = on ? 0 : 2;
 
-        float time = on ? slowMotionTime : 1;
-        Time.timeScale = time;
+        Time.timeScale = on ? slowMotionTime : 1f;
 
         //Polish
         DOVirtual.Float(on ? 0 : 1, on ? 1 : 0, .3f, SlowmotionPostProcessing).SetUpdate(true);
@@ -254,6 +274,10 @@ public class TacticalModeScript : MonoBehaviour
         OnTacticalTrigger.Invoke(on);
     }
 
+    /// <summary>
+    /// 通过UI选择敌人时触发
+    /// </summary>
+    /// <param name="index"></param>
     public void SelectTarget(int index)
     {
         targetIndex = index;
@@ -298,16 +322,24 @@ public class TacticalModeScript : MonoBehaviour
             camImpulseSource.GenerateImpulse();
     }
 
+    /// <summary>
+    /// slash砍动画事件01
+    /// </summary>
     public void DirRight()
     {
         VFXDir = -5;
     }
-
+    /// <summary>
+    /// slash砍动画事件02
+    /// </summary>
     public void DirLeft()
     {
         VFXDir = 5;
     }
 
+    /// <summary>
+    /// 取消单步行动
+    /// </summary>
     public void CancelAction()
     {
         if (!targetCam.gameObject.activeSelf && tacticalMode)
@@ -317,36 +349,56 @@ public class TacticalModeScript : MonoBehaviour
             SetAimCamera(false);
     }
 
+    /// <summary>
+    /// 找到最近的攻击目标
+    /// </summary>
+    /// <returns>索引</returns>
     int NearestTargetToCenter()
     {
         float[] distances = new float[targets.Count];
 
+        Vector2 screenCenter = new Vector2(Screen.width / 2, Screen.height / 2);
         for (int i = 0; i < targets.Count; i++)
         {
-            distances[i] = Vector2.Distance(Camera.main.WorldToScreenPoint(targets[i].position), new Vector2(Screen.width / 2, Screen.height / 2));
+            distances[i] = Vector2.Distance(Camera.main.WorldToScreenPoint(targets[i].position), screenCenter);
         }
 
-        float minDistance = Mathf.Min(distances);
+        float minDistance = float.MaxValue;
         int index = 0;
-
         for (int i = 0; i < distances.Length; i++)
         {
-            if (minDistance == distances[i])
+            if (distances[i] <= minDistance)
+            {
+                minDistance = distances[i];
                 index = i;
+            }
         }
         return index;
     }
 
-    public void LightColor(Light l, Color x, float time)
+    /// <summary>
+    /// 触发灯光特效并自动还原
+    /// </summary>
+    /// <param name="light"></param>
+    /// <param name="color"></param>
+    /// <param name="duration"></param>
+    public void LightColor(Light light, Color color, float duration)
     {
-        l.DOColor(x, time).OnComplete(() => l.DOColor(Color.black, time));   
+        light.DOColor(color, duration).OnComplete(() => light.DOColor(Color.black, duration));   
     }
-    public void SlowmotionPostProcessing(float x)
+    /// <summary>
+    /// 处理慢动作权重
+    /// </summary>
+    /// <param name="weight"></param>
+    public void SlowmotionPostProcessing(float weight)
     {
-        slowMotionVolume.weight = x;
+        slowMotionVolume.weight = weight;
     }
 
-
+    /// <summary>
+    /// 通过碰撞球识别附近敌人并添加到targets列表中
+    /// </summary>
+    /// <param name="other"></param>
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Enemy"))
@@ -354,7 +406,10 @@ public class TacticalModeScript : MonoBehaviour
             targets.Add(other.transform);
         }
     }
-
+    /// <summary>
+    /// 通过碰撞球识别远离的敌人并从targets列表中移除
+    /// </summary>
+    /// <param name="other"></param>
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Enemy"))

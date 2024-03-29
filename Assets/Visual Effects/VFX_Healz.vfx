@@ -20,7 +20,7 @@ MonoBehaviour:
     serializedVersion: 2
     x: -2213
     y: -6232
-    width: 2499
+    width: 2531
     height: 2845
 --- !u!114 &114350483966674976
 MonoBehaviour:
@@ -77,7 +77,7 @@ VisualEffectResource:
       1\n#define VFX_USE_DIRECTION_CURRENT 1\n#define VFX_USE_LIFETIME_CURRENT 1\n#define
       VFX_USE_VELOCITY_CURRENT 1\n#define VFX_USE_PARTICLEID_CURRENT 1\n#define VFX_USE_ALIVE_CURRENT
       1\n#define VFX_USE_AGE_CURRENT 1\n#define VFX_WORLD_SPACE 1\n#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/VFXGraph/Shaders/VFXDefines.hlsl\"\n\n\r\nCBUFFER_START(parameters)\n   
-      float4x4 uniform_b;\n    float uniform_c;\n    uint3 PADDING_0;\nCBUFFER_END\n\nstruct
+      float4x4 uniform_a;\n    float uniform_b;\n    uint3 PADDING_0;\nCBUFFER_END\n\nstruct
       Attributes\n{\n    float3 position;\n    uint seed;\n    float3 direction;\n   
       float lifetime;\n    float3 velocity;\n    uint particleId;\n    bool alive;\n   
       float age;\n};\n\nstruct SourceAttributes\n{\n};\n\n\n\r\n\r\n#define USE_DEAD_LIST
@@ -150,10 +150,10 @@ VisualEffectResource:
       tmp_bh, float3(0, 0, 0));\n        }\n        {\n            SetAttribute_F01429A3(
       /*inout */attributes.lifetime,  /*inout */attributes.seed, (float)0, (float)1);\n       
       }\n        {\n            float3 tmp_bb = mul(float4x4(1,0,0,0,0,5.96046448E-08,-0.99999994,0,0,0.99999994,5.96046448E-08,0,0,0,0,1),
-      float4(attributes.position, 1.0)).xyz;\n            float3 tmp_bc = mul(uniform_b,
+      float4(attributes.position, 1.0)).xyz;\n            float3 tmp_bc = mul(uniform_a,
       float4(tmp_bb, 1.0)).xyz;\n            SetAttribute_CAC29747( /*inout */attributes.position,
       tmp_bc);\n        }\n        {\n            uint tmp_bb = attributes.particleId
-      ^ asuint(uniform_c);\n            float tmp_bc = FixedRand(tmp_bb);\n           
+      ^ asuint(uniform_b);\n            float tmp_bc = FixedRand(tmp_bb);\n           
       float3 tmp_bd = float3((float)0, tmp_bc, (float)0);\n            SetAttribute_AA7D638(
       /*inout */attributes.velocity, tmp_bd);\n        }\n        \n\r\n\t\t\r\n#if
       VFX_USE_ALIVE_CURRENT\r\n        if (attributes.alive)\r\n#endif       \r\n       
@@ -175,7 +175,7 @@ VisualEffectResource:
       VFX_USE_MASS_CURRENT 1\n#define VFX_USE_ALIVE_CURRENT 1\n#define VFX_USE_AGE_CURRENT
       1\n#define VFX_WORLD_SPACE 1\n#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/VFXGraph/Shaders/VFXDefines.hlsl\"\n\n\r\nCBUFFER_START(parameters)\n   
       float4x4 InvFieldTransform_a;\n    float4x4 FieldTransform_a;\n    float deltaTime_a;\n   
-      float uniform_e;\n    uint2 PADDING_0;\nCBUFFER_END\n\nstruct Attributes\n{\n   
+      float uniform_a;\n    uint2 PADDING_0;\nCBUFFER_END\n\nstruct Attributes\n{\n   
       float3 position;\n    float lifetime;\n    float3 velocity;\n    uint particleId;\n   
       float mass;\n    bool alive;\n    float age;\n};\n\nstruct SourceAttributes\n{\n};\n\n\n\r\n\r\n#define
       USE_DEAD_LIST (VFX_USE_ALIVE_CURRENT && !HAS_STRIPS)\r\n\r\nRWByteAddressBuffer
@@ -188,7 +188,7 @@ VisualEffectResource:
       \"Packages/com.unity.visualeffectgraph/Shaders/VFXCommon.hlsl\"\n\n\r\n\r\nvoid
       Turbulence_18C(float3 position, inout float3 velocity, float mass, float4x4
       InvFieldTransform, float4x4 FieldTransform, float Intensity, float Drag, float
-      frequency, float roughness, float lacunarity, int octaves, float deltaTime)
+      frequency, int octaves, float roughness, float lacunarity, float deltaTime)
       /*Mode:Relative NoiseType:Perlin */\n{\n    float3 vectorFieldCoord = mul(InvFieldTransform,
       float4(position,1.0f)).xyz;\n    \n    float3 value = GeneratePerlinCurlNoise(vectorFieldCoord
       + 0.5f, frequency, octaves, roughness, lacunarity);\n    value = mul(FieldTransform,float4(value,0.0f)).xyz
@@ -217,8 +217,8 @@ VisualEffectResource:
       PARTICLE_PER_STRIP_COUNT);\r\n            InitStripAttributes(index, attributes,
       stripData);\r\n#endif\r\n\t\t\t\r\n\t\t\t{\n\t\t\t    Turbulence_18C(attributes.position, 
       /*inout */attributes.velocity, attributes.mass, InvFieldTransform_a, FieldTransform_a,
-      (float)1, (float)1, (float)1, (float)0.5, (float)2, (int)3, deltaTime_a);\n\t\t\t}\n\t\t\t{\n\t\t\t   
-      uint tmp_bd = attributes.particleId ^ asuint(uniform_e);\n\t\t\t    float tmp_be
+      (float)1, (float)1, (float)1, (int)3, (float)0.5, (float)2, deltaTime_a);\n\t\t\t}\n\t\t\t{\n\t\t\t   
+      uint tmp_bd = attributes.particleId ^ asuint(uniform_a);\n\t\t\t    float tmp_be
       = FixedRand(tmp_bd);\n\t\t\t    float tmp_bg = tmp_be * (float)0.0500000007;\n\t\t\t   
       float3 tmp_bh = float3((float)0, tmp_bg, (float)0);\n\t\t\t    SetAttribute_AA7D638(
       /*inout */attributes.velocity, tmp_bh);\n\t\t\t}\n\t\t\tEulerIntegration( /*inout
@@ -252,9 +252,9 @@ VisualEffectResource:
       stripData = GetStripDataFromParticleIndex(index, PARTICLE_PER_STRIP_COUNT);\r\n       
       InitStripAttributes(index, attributes, stripData);\r\n#endif\r\n\t\t\r\n\t\t{\n\t\t   
       Turbulence_18C(attributes.position,  /*inout */attributes.velocity, attributes.mass,
-      InvFieldTransform_a, FieldTransform_a, (float)1, (float)1, (float)1, (float)0.5,
-      (float)2, (int)3, deltaTime_a);\n\t\t}\n\t\t{\n\t\t    uint tmp_bd = attributes.particleId
-      ^ asuint(uniform_e);\n\t\t    float tmp_be = FixedRand(tmp_bd);\n\t\t    float
+      InvFieldTransform_a, FieldTransform_a, (float)1, (float)1, (float)1, (int)3,
+      (float)0.5, (float)2, deltaTime_a);\n\t\t}\n\t\t{\n\t\t    uint tmp_bd = attributes.particleId
+      ^ asuint(uniform_a);\n\t\t    float tmp_be = FixedRand(tmp_bd);\n\t\t    float
       tmp_bg = tmp_be * (float)0.0500000007;\n\t\t    float3 tmp_bh = float3((float)0,
       tmp_bg, (float)0);\n\t\t    SetAttribute_AA7D638( /*inout */attributes.velocity,
       tmp_bh);\n\t\t}\n\t\tEulerIntegration( /*inout */attributes.position, attributes.velocity,
@@ -295,7 +295,7 @@ VisualEffectResource:
       pivotX;\n\t\t    float pivotY;\n\t\t    float pivotZ;\n\t\t    float size;\n\t\t   
       float scaleX;\n\t\t    float scaleY;\n\t\t    float scaleZ;\n\t\t    float
       age;\n\t\t};\n\t\t\n\t\tstruct SourceAttributes\n\t\t{\n\t\t};\n\t\t\n\t\tTexture2D
-      mainTexture;\n\t\tSamplerState samplermainTexture;\n\t\tfloat4 mainTexture_TexelSize;\n\t\t\n\n\t\t\n\t\t#define
+      mainTexture;\n\t\tSamplerState samplermainTexture;\n\t\tfloat4 mainTexture_TexelSize;\n\t\t\n\t\t\n\n\t\t\n\t\t#define
       VFX_NEEDS_COLOR_INTERPOLATOR (VFX_USE_COLOR_CURRENT || VFX_USE_ALPHA_CURRENT)\n\t\t#if
       HAS_STRIPS\n\t\t#define VFX_OPTIONAL_INTERPOLATION \n\t\t#else\n\t\t#define
       VFX_OPTIONAL_INTERPOLATION nointerpolation\n\t\t#endif\n\t\t\n\t\tByteAddressBuffer
@@ -747,7 +747,7 @@ VisualEffectResource:
       VFX_USE_SIZE_CURRENT 1\n#define VFX_USE_PARTICLEID_CURRENT 1\n#define VFX_USE_VELOCITY_CURRENT
       1\n#define VFX_USE_ALIVE_CURRENT 1\n#define VFX_USE_AGE_CURRENT 1\n#define
       VFX_WORLD_SPACE 1\n#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/VFXGraph/Shaders/VFXDefines.hlsl\"\n\n\r\nCBUFFER_START(parameters)\n   
-      float4x4 uniform_b;\n    float uniform_c;\n    uint3 PADDING_0;\nCBUFFER_END\n\nstruct
+      float4x4 uniform_a;\n    float uniform_b;\n    uint3 PADDING_0;\nCBUFFER_END\n\nstruct
       Attributes\n{\n    float3 position;\n    uint seed;\n    float3 direction;\n   
       float lifetime;\n    float size;\n    uint particleId;\n    float3 velocity;\n   
       bool alive;\n    float age;\n};\n\nstruct SourceAttributes\n{\n};\n\n\n\r\n\r\n#define
@@ -820,14 +820,14 @@ VisualEffectResource:
       /*inout */attributes.seed,  /*inout */attributes.direction, tmp_bc, tmp_bg,
       tmp_bh, float3(0, 0, 0));\n        }\n        {\n            float3 tmp_bb
       = mul(float4x4(1,0,0,0,0,5.96046448E-08,-0.99999994,0,0,0.99999994,5.96046448E-08,0,0,0,0,1),
-      float4(attributes.position, 1.0)).xyz;\n            float3 tmp_bc = mul(uniform_b,
+      float4(attributes.position, 1.0)).xyz;\n            float3 tmp_bc = mul(uniform_a,
       float4(tmp_bb, 1.0)).xyz;\n            SetAttribute_CAC29747( /*inout */attributes.position,
       tmp_bc);\n        }\n        {\n            uint tmp_bb = attributes.particleId
-      ^ asuint(uniform_c);\n            float tmp_bc = FixedRand(tmp_bb);\n           
+      ^ asuint(uniform_b);\n            float tmp_bc = FixedRand(tmp_bb);\n           
       float tmp_bd = tmp_bc * (float)0.5;\n            float tmp_be = (float)0.5
       + tmp_bd;\n            SetAttribute_F0142CB9( /*inout */attributes.lifetime,
       tmp_be);\n        }\n        {\n            uint tmp_ba = attributes.particleId
-      ^ asuint(uniform_c);\n            float tmp_bb = FixedRand(tmp_ba);\n           
+      ^ asuint(uniform_b);\n            float tmp_bb = FixedRand(tmp_ba);\n           
       float tmp_bd = tmp_bb * (float)0.300000012;\n            SetAttribute_3278B22F(
       /*inout */attributes.size, tmp_bd);\n        }\n        \n\r\n\t\t\r\n#if VFX_USE_ALIVE_CURRENT\r\n       
       if (attributes.alive)\r\n#endif       \r\n        {\r\n#if USE_DEAD_LIST\r\n\t       
@@ -852,7 +852,7 @@ VisualEffectResource:
       uint3 PADDING_0;\nCBUFFER_END\n\nstruct Attributes\n{\n    float3 position;\n   
       float lifetime;\n    float3 velocity;\n    float mass;\n    bool alive;\n   
       float age;\n};\n\nstruct SourceAttributes\n{\n};\n\nTexture3D DistanceField_b;\nSamplerState
-      samplerDistanceField_b;\nfloat4 DistanceField_b_TexelSize;\n\n\r\n\r\n#define
+      samplerDistanceField_b;\nfloat4 DistanceField_b_TexelSize;\n\n\n\r\n\r\n#define
       USE_DEAD_LIST (VFX_USE_ALIVE_CURRENT && !HAS_STRIPS)\r\n\r\nRWByteAddressBuffer
       attributeBuffer;\r\n\r\n#if USE_DEAD_LIST\r\nRWStructuredBuffer<uint> deadListOut;\r\n#endif\r\n\r\n#if
       VFX_HAS_INDIRECT_DRAW\r\nRWStructuredBuffer<uint> indirectBuffer;\r\n#endif\r\n\r\n#if
@@ -863,7 +863,7 @@ VisualEffectResource:
       \"Packages/com.unity.visualeffectgraph/Shaders/VFXCommon.hlsl\"\n\n\r\n\r\nvoid
       Turbulence_18D(float3 position, inout float3 velocity, float mass, float4x4
       InvFieldTransform, float4x4 FieldTransform, float Intensity, float Drag, float
-      frequency, float roughness, float lacunarity, int octaves, float deltaTime)
+      frequency, int octaves, float roughness, float lacunarity, float deltaTime)
       /*Mode:Relative NoiseType:Value */\n{\n    float3 vectorFieldCoord = mul(InvFieldTransform,
       float4(position,1.0f)).xyz;\n    \n    float3 value = GenerateValueCurlNoise(vectorFieldCoord
       + 0.5f, frequency, octaves, roughness, lacunarity);\n    value = mul(FieldTransform,float4(value,0.0f)).xyz
@@ -906,7 +906,7 @@ VisualEffectResource:
       stripData);\r\n#endif\r\n\t\t\t\r\n\t\t\t{\n\t\t\t    Turbulence_18D(attributes.position, 
       /*inout */attributes.velocity, attributes.mass, float4x4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1),
       float4x4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1), (float)1.5, (float)1, (float)1,
-      (float)0.5, (float)2, (int)1, deltaTime_a);\n\t\t\t}\n\t\t\t{\n\t\t\t    ConformToSDF(
+      (int)1, (float)0.5, (float)2, deltaTime_a);\n\t\t\t}\n\t\t\t{\n\t\t\t    ConformToSDF(
       /*inout */attributes.velocity, attributes.position, attributes.mass, GetVFXSampler(DistanceField_b,
       samplerDistanceField_b), InvFieldTransform_b, FieldTransform_b, (float)1, (float)201,
       (float)0.100000001, (float)50, deltaTime_a);\n\t\t\t}\n\t\t\tEulerIntegration(
@@ -940,7 +940,7 @@ VisualEffectResource:
       InitStripAttributes(index, attributes, stripData);\r\n#endif\r\n\t\t\r\n\t\t{\n\t\t   
       Turbulence_18D(attributes.position,  /*inout */attributes.velocity, attributes.mass,
       float4x4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1), float4x4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1),
-      (float)1.5, (float)1, (float)1, (float)0.5, (float)2, (int)1, deltaTime_a);\n\t\t}\n\t\t{\n\t\t   
+      (float)1.5, (float)1, (float)1, (int)1, (float)0.5, (float)2, deltaTime_a);\n\t\t}\n\t\t{\n\t\t   
       ConformToSDF( /*inout */attributes.velocity, attributes.position, attributes.mass,
       GetVFXSampler(DistanceField_b, samplerDistanceField_b), InvFieldTransform_b,
       FieldTransform_b, (float)1, (float)201, (float)0.100000001, (float)50, deltaTime_a);\n\t\t}\n\t\tEulerIntegration(
@@ -981,7 +981,7 @@ VisualEffectResource:
       float pivotY;\n\t\t    float pivotZ;\n\t\t    float scaleX;\n\t\t    float
       scaleY;\n\t\t    float scaleZ;\n\t\t    float age;\n\t\t};\n\t\t\n\t\tstruct
       SourceAttributes\n\t\t{\n\t\t};\n\t\t\n\t\tTexture2D mainTexture;\n\t\tSamplerState
-      samplermainTexture;\n\t\tfloat4 mainTexture_TexelSize;\n\t\t\n\n\t\t\n\t\t#define
+      samplermainTexture;\n\t\tfloat4 mainTexture_TexelSize;\n\t\t\n\t\t\n\n\t\t\n\t\t#define
       VFX_NEEDS_COLOR_INTERPOLATOR (VFX_USE_COLOR_CURRENT || VFX_USE_ALPHA_CURRENT)\n\t\t#if
       HAS_STRIPS\n\t\t#define VFX_OPTIONAL_INTERPOLATION \n\t\t#else\n\t\t#define
       VFX_OPTIONAL_INTERPOLATION nointerpolation\n\t\t#endif\n\t\t\n\t\tByteAddressBuffer
@@ -1598,13 +1598,13 @@ VisualEffectResource:
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 5
+        data[3]: 1
       - op: 1
         valueIndex: 141
         data[0]: -1
         data[1]: -1
         data[2]: -1
-        data[3]: 1
+        data[3]: 5
       - op: 36
         valueIndex: 142
         data[0]: 12
@@ -1673,7 +1673,7 @@ VisualEffectResource:
           m_Value: 50
         - m_ExpressionIndex: 25
           m_Value: 1.5
-        - m_ExpressionIndex: 31
+        - m_ExpressionIndex: 30
           m_Value: 2
       m_Vector2f:
         m_Array:
@@ -1701,7 +1701,7 @@ VisualEffectResource:
         m_Array:
         - m_ExpressionIndex: 24
           m_Value: 1
-        - m_ExpressionIndex: 30
+        - m_ExpressionIndex: 31
           m_Value: 3
       m_Matrix4x4f:
         m_Array:
@@ -2088,9 +2088,9 @@ VisualEffectResource:
         index: 2
       temporaryBuffers: []
       values:
-      - nameId: uniform_b
+      - nameId: uniform_a
         index: 8
-      - nameId: uniform_c
+      - nameId: uniform_b
         index: 2
       params:
       - nameId: bounds_center
@@ -2113,7 +2113,7 @@ VisualEffectResource:
         index: 12
       - nameId: deltaTime_a
         index: 26
-      - nameId: uniform_e
+      - nameId: uniform_a
         index: 2
       params: []
       processor: {fileID: 0}
@@ -2166,9 +2166,9 @@ VisualEffectResource:
         index: 5
       temporaryBuffers: []
       values:
-      - nameId: uniform_b
+      - nameId: uniform_a
         index: 8
-      - nameId: uniform_c
+      - nameId: uniform_b
         index: 2
       params:
       - nameId: bounds_center
@@ -3441,6 +3441,12 @@ MonoBehaviour:
       m_SerializableType: System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral,
         PublicKeyToken=b77a5c561934e089
     attributes:
+    - m_Type: 0
+      m_Min: 1
+      m_Max: 8
+      m_Tooltip: 
+      m_Regex: 
+      m_RegexMaxLength: 0
     - m_Type: 3
       m_Min: -Infinity
       m_Max: Infinity
@@ -9509,6 +9515,12 @@ MonoBehaviour:
       m_SerializableType: System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral,
         PublicKeyToken=b77a5c561934e089
     attributes:
+    - m_Type: 0
+      m_Min: 1
+      m_Max: 8
+      m_Tooltip: 
+      m_Regex: 
+      m_RegexMaxLength: 0
     - m_Type: 3
       m_Min: -Infinity
       m_Max: Infinity

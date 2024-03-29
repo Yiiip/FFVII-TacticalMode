@@ -6,51 +6,54 @@ using UnityEngine;
 //This script requires you to have setup your animator with 3 parameters, "InputMagnitude", "InputX", "InputZ"
 //With a blend tree to control the inputmagnitude and allow blending between animations.
 [RequireComponent(typeof(CharacterController))]
-public class MovementInput : MonoBehaviour {
-
+public class MovementInput : MonoBehaviour
+{
     public float Velocity;
-	public bool active = true;
-    [Space]
+    public bool active = true;
 
-	public float InputX;
-	public float InputZ;
-	public Vector3 desiredMoveDirection;
-	public bool blockRotationPlayer;
-	public float desiredRotationSpeed = 0.1f;
-	public Animator anim;
-	public float Speed;
-	public float allowPlayerRotation = 0.1f;
-	public Camera cam;
-	public CharacterController controller;
-	public bool isGrounded;
+    [Space]
+    public float InputX;
+    public float InputZ;
+    public Vector3 desiredMoveDirection;
+    public bool blockRotationPlayer;
+    public float desiredRotationSpeed = 0.1f;
+    public Animator anim;
+    public float Speed;
+    public float allowPlayerRotation = 0.1f;
+    public Camera cam;
+    public CharacterController controller;
+    public bool isGrounded;
 
     [Header("Animation Smoothing")]
     [Range(0, 1f)]
     public float HorizontalAnimSmoothTime = 0.2f;
     [Range(0, 1f)]
     public float VerticalAnimTime = 0.2f;
-    [Range(0,1f)]
+    [Range(0, 1f)]
     public float StartAnimTime = 0.3f;
     [Range(0, 1f)]
     public float StopAnimTime = 0.15f;
 
     public float verticalVel;
     private Vector3 moveVector;
-	private TacticalModeScript gameScript;
-	// Use this for initialization
-	void Start () {
-		anim = this.GetComponent<Animator> ();
-		cam = Camera.main;
-		controller = this.GetComponent<CharacterController> ();
-		gameScript = GetComponent<TacticalModeScript>();
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    private TacticalModeScript gameScript;
 
-		if (gameScript.usingAbility)
-			return;
-		InputMagnitude ();
+    void Start()
+    {
+        cam = Camera.main;
+        anim = GetComponent<Animator>();
+        controller = GetComponent<CharacterController>();
+        gameScript = GetComponent<TacticalModeScript>();
+    }
+
+    void Update()
+    {
+        if (gameScript.usingAbility)
+        {
+            return;
+        }
+
+        InputMagnitude();
 
         isGrounded = controller.isGrounded;
         if (isGrounded)
@@ -64,29 +67,27 @@ public class MovementInput : MonoBehaviour {
         moveVector = new Vector3(0, verticalVel * .2f * Time.deltaTime, 0);
 
         controller.Move(moveVector);
-
-
     }
 
-    void PlayerMoveAndRotation(float InputX, float InputZ) {
+    void PlayerMoveAndRotation(float InputX, float InputZ)
+    {
+        Vector3 forward = cam.transform.forward;
+        Vector3 right = cam.transform.right;
 
-		var camera = Camera.main;
-		var forward = cam.transform.forward;
-		var right = cam.transform.right;
+        forward.y = 0f;
+        right.y = 0f;
 
-		forward.y = 0f;
-		right.y = 0f;
+        forward.Normalize();
+        right.Normalize();
 
-		forward.Normalize ();
-		right.Normalize ();
+        desiredMoveDirection = forward * InputZ + right * InputX;
 
-		desiredMoveDirection = forward * InputZ + right * InputX;
-
-		if (blockRotationPlayer == false) {
-			transform.rotation = Quaternion.Slerp (transform.rotation, Quaternion.LookRotation (desiredMoveDirection), desiredRotationSpeed);
-            controller.Move(desiredMoveDirection * Time.deltaTime * Velocity);
-		}
-	}
+        if (blockRotationPlayer == false)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desiredMoveDirection), desiredRotationSpeed);
+            controller.Move(Time.deltaTime * Velocity * desiredMoveDirection);
+        }
+    }
 
     public void LookAt(Vector3 pos)
     {
@@ -95,34 +96,33 @@ public class MovementInput : MonoBehaviour {
 
     public void RotateToCamera(Transform t)
     {
-
-        var camera = Camera.main;
-        var forward = cam.transform.forward;
-        var right = cam.transform.right;
-
-        desiredMoveDirection = forward;
+        desiredMoveDirection = cam.transform.forward;
 
         t.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desiredMoveDirection), desiredRotationSpeed);
     }
 
-	void InputMagnitude() {
-		//Calculate Input Vectors
-		InputX = active ? Input.GetAxis ("Horizontal") : 0;
-		InputZ = active ? Input.GetAxis ("Vertical") : 0;
+    void InputMagnitude()
+    {
+        //Calculate Input Vectors
+        InputX = active ? Input.GetAxis("Horizontal") : 0;
+        InputZ = active ? Input.GetAxis("Vertical") : 0;
 
-		//anim.SetFloat ("InputZ", InputZ, VerticalAnimTime, Time.deltaTime * 2f);
-		//anim.SetFloat ("InputX", InputX, HorizontalAnimSmoothTime, Time.deltaTime * 2f);
+        //anim.SetFloat ("InputZ", InputZ, VerticalAnimTime, Time.deltaTime * 2f);
+        //anim.SetFloat ("InputX", InputX, HorizontalAnimSmoothTime, Time.deltaTime * 2f);
 
-		//Calculate the Input Magnitude
-		Speed = new Vector2(InputX, InputZ).sqrMagnitude;
+        //Calculate the Input Magnitude
+        Speed = new Vector2(InputX, InputZ).sqrMagnitude;
 
         //Physically move player
 
-		if (Speed > allowPlayerRotation) {
-			anim.SetFloat ("Blend", Speed, StartAnimTime, Time.deltaTime);
-			PlayerMoveAndRotation (InputX, InputZ);
-		} else if (Speed < allowPlayerRotation) {
-			anim.SetFloat ("Blend", Speed, StopAnimTime, Time.deltaTime);
-		}
-	}
+        if (Speed > allowPlayerRotation)
+        {
+            anim.SetFloat("Blend", Speed, StartAnimTime, Time.deltaTime);
+            PlayerMoveAndRotation(InputX, InputZ);
+        }
+        else if (Speed < allowPlayerRotation)
+        {
+            anim.SetFloat("Blend", Speed, StopAnimTime, Time.deltaTime);
+        }
+    }
 }
