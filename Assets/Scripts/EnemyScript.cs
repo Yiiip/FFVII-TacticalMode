@@ -11,6 +11,10 @@ public class EnemyScript : MonoBehaviour
     {
         anim = GetComponent<Animator>();
     }
+
+    /// <summary>
+    /// 受击
+    /// </summary>
     public void GetHit()
     {
         anim.SetTrigger("hit");
@@ -20,10 +24,8 @@ public class EnemyScript : MonoBehaviour
 
     IEnumerator EyeHitSprite()
     {
-        eyesRenderer.material.SetTextureOffset("_BaseColorMap", new Vector2(0, -.33f));
+        eyesRenderer.material.SetTextureOffset("_BaseColorMap", new Vector2(0, -.33f)); //眼睛变成“X”的形状
         yield return new WaitForSeconds(.8f);
-        eyesRenderer.material.SetTextureOffset("_BaseColorMap", new Vector2(.66f, 0));
-
+        eyesRenderer.material.SetTextureOffset("_BaseColorMap", new Vector2(.66f, 0)); //眼睛恢复
     }
-
 }

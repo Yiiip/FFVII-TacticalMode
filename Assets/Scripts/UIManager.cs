@@ -28,9 +28,9 @@ public class UIManager : MonoBehaviour
     {
         gameScript = FindObjectOfType<TacticalModeScript>();
         gameScript.OnAttack.AddListener(AttackAction); //事件：砍敌人
-        gameScript.OnModificationATB.AddListener(UpdateSlider); //事件：
+        gameScript.OnModificationATB.AddListener(UpdateSlider); //事件：更改能量条
         gameScript.OnTacticalTrigger.AddListener(ShowTacticalMenu); //事件：进入或退出战术模式
-        gameScript.OnTargetSelectTrigger.AddListener(ShowTargetOptions); //事件：
+        gameScript.OnTargetSelectTrigger.AddListener(ShowTargetOptions); //事件：进入或退出选择敌人
     }
 
     private void Update()
@@ -101,7 +101,7 @@ public class UIManager : MonoBehaviour
         {
             for (int i = 0; i < targetGroup.childCount; i++)
             {
-                if(gameScript.targets.Count - 1 >= i)
+                if (i <= gameScript.targets.Count - 1)
                 {
                     targetGroup.GetChild(i).GetComponent<CanvasGroup>().alpha = 1;
                     targetGroup.GetChild(i).GetComponent<CanvasGroup>().interactable = true;
@@ -116,7 +116,4 @@ public class UIManager : MonoBehaviour
         }
         EventSystem.current.SetSelectedGameObject(on ? targetGroup.GetChild(0).gameObject : commandsGroup.GetChild(0).gameObject);
     }
-
-
-
 }

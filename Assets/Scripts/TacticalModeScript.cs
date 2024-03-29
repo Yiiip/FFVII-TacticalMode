@@ -16,11 +16,11 @@ public class TacticalModeScript : MonoBehaviour
     [HideInInspector]
     public GameEvent OnAttack; //砍敌人
     [HideInInspector]
-    public GameEvent OnModificationATB;
+    public GameEvent OnModificationATB; //更改能量条
     [HideInInspector]
     public TacticalModeEvent OnTacticalTrigger; //进入或退出战术模式
     [HideInInspector]
-    public TacticalModeEvent OnTargetSelectTrigger;
+    public TacticalModeEvent OnTargetSelectTrigger; //进入或退出选择敌人
     #endregion
 
     private MovementInput movement;
@@ -33,9 +33,9 @@ public class TacticalModeScript : MonoBehaviour
     [Space]
     [Header("States")]
     public bool tacticalMode; //是否处于战术模式
-    public bool isAiming;
-    public bool usingAbility;
-    public bool dashing; //是否冲刺中
+    public bool isAiming; //是否选择目标中
+    public bool usingAbility; //标记正在使用能力，防抖其他的行为逻辑
+    public bool dashing; //是否冲刺中，防抖其他的行为逻辑
 
     [Space]
 
@@ -109,7 +109,9 @@ public class TacticalModeScript : MonoBehaviour
         if (Input.GetMouseButtonDown(1) && !usingAbility)
         {
             if (atbCount > 0 && !tacticalMode)
+            {
                 SetTacticalMode(true);
+            }
         }
 
         //ESC键：取消单步行动
@@ -120,7 +122,7 @@ public class TacticalModeScript : MonoBehaviour
     }
 
     /// <summary>
-    /// 转身进攻（通过按钮选择进攻对象后触发）
+    /// 转身进攻目标对象（UI按钮调用）
     /// </summary>
     public void SpinAttack()
     {
@@ -130,7 +132,7 @@ public class TacticalModeScript : MonoBehaviour
 
         SetTacticalMode(false);
 
-        MoveTowardsTarget(targets[targetIndex]);
+        MoveTowardsTarget(targets[targetIndex]); //移动到目标处
 
         //Animation
         anim.SetTrigger("ability");
@@ -140,6 +142,9 @@ public class TacticalModeScript : MonoBehaviour
         LightColor(groundLight, abilityColot, .3f);
     }
 
+    /// <summary>
+    /// 治疗（UI按钮调用）
+    /// </summary>
     public void Heal()
     {
         ModifyATB(-100);
@@ -156,9 +161,14 @@ public class TacticalModeScript : MonoBehaviour
         LightColor(groundLight, healColor, .5f);
     }
 
+    /// <summary>
+    /// 移动到目标处
+    /// </summary>
+    /// <param name="target"></param>
     public void MoveTowardsTarget(Transform target)
     {
-        if (Vector3.Distance(transform.position, target.position) > 1 && Vector3.Distance(transform.position, target.position) < 10)
+        float distance = Vector3.Distance(transform.position, target.position);
+        if (distance > 1 && distance < 10)
         {
             StartCoroutine(DashCooldown());
             transform.DOMove(TargetOffset(), .5f);
@@ -166,6 +176,10 @@ public class TacticalModeScript : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 标记防抖
+    /// </summary>
+    /// <returns></returns>
     IEnumerator AbilityCooldown()
     {
         usingAbility = true;
@@ -182,16 +196,15 @@ public class TacticalModeScript : MonoBehaviour
 
     public Vector3 TargetOffset()
     {
-        Vector3 position;
-        position = targets[targetIndex].position;
-        return Vector3.MoveTowards(position, transform.position, 1.2f);
+        Vector3 targetPosition = targets[targetIndex].position;
+        return Vector3.MoveTowards(targetPosition, transform.position, 1.2f);
     }
 
     /// <summary>
-    /// 武器击打碰撞到敌人时触发
+    /// 武器砍到敌人时触发的碰撞事件
     /// </summary>
-    /// <param name="x"></param>
-    public void OnWeaponHitTarget(Transform x)
+    /// <param name="target"></param>
+    public void OnWeaponHitTarget(Transform target)
     {
         OnModificationATB.Invoke();
 
@@ -203,31 +216,32 @@ public class TacticalModeScript : MonoBehaviour
 
         LightColor(swordLight, sparkColor, .1f);
 
-        if (x.GetComponent<EnemyScript>() != null)
+        if (target.GetComponent<EnemyScript>() != null)
         {
-            x.GetComponent<EnemyScript>().GetHit();
+            target.GetComponent<EnemyScript>().GetHit();
         }
     }
 
     /// <summary>
     /// 更改能量条
     /// </summary>
-    /// <param name="amount">正负值</param>
-    public void ModifyATB(float amount)
+    /// <param name="delta">正负值</param>
+    public void ModifyATB(float delta)
     {
         OnModificationATB.Invoke();
 
-        atbSlider += amount;
-        atbSlider = Mathf.Clamp(atbSlider, 0, (filledAtbValue * 2));
+        atbSlider += delta;
+        float maxAtbValue = filledAtbValue * 2;
+        atbSlider = Mathf.Clamp(atbSlider, 0, maxAtbValue);
 
-        if (amount > 0)
+        if (delta > 0) //增加数值
         {
             if (atbSlider >= filledAtbValue && atbCount == 0)
                 atbCount = 1;
-            if (atbSlider >= (filledAtbValue * 2) && atbCount == 1)
+            if (atbSlider >= maxAtbValue && atbCount == 1)
                 atbCount = 2;
         }
-        else
+        else //减少数值
         {
             if (atbSlider <= filledAtbValue)
                 atbCount = 0;
@@ -239,7 +253,7 @@ public class TacticalModeScript : MonoBehaviour
     }
 
     /// <summary>
-    /// 消耗能量条
+    /// 清除一格能量条
     /// </summary>
     public void ClearATB()
     {
@@ -253,11 +267,11 @@ public class TacticalModeScript : MonoBehaviour
     /// <param name="on"></param>
     public void SetTacticalMode(bool on)
     {
+        //停止移动逻辑
         movement.desiredRotationSpeed = on ? 0 : .3f;
         movement.active = !on;
 
         tacticalMode = on;
-        //movement.enabled = !on;
 
         if (!on)
         {
@@ -266,6 +280,7 @@ public class TacticalModeScript : MonoBehaviour
 
         camImpulseSource.m_ImpulseDefinition.m_AmplitudeGain = on ? 0 : 2;
 
+        //进入慢动作
         Time.timeScale = on ? slowMotionTime : 1f;
 
         //Polish
@@ -284,19 +299,23 @@ public class TacticalModeScript : MonoBehaviour
         aimObject.DOLookAt(targets[targetIndex].position, .3f).SetUpdate(true);
     }
 
+    /// <summary>
+    /// 是否使用选择敌人的相机（UI按钮调用true参数）
+    /// </summary>
+    /// <param name="on"></param>
     public void SetAimCamera(bool on)
     {
-        if (targets.Count < 1)
-            return;
+        if (targets.Count == 0) return;
 
-        OnTargetSelectTrigger.Invoke(on);
+        OnTargetSelectTrigger.Invoke(on); //通知UI层
 
         targetCam.LookAt = on ? aimObject : null;
         targetCam.Follow = on ? aimObject : null;
-        targetCam.gameObject.SetActive(on);
-        isAiming = on;
+        targetCam.gameObject.SetActive(on); //使用选择敌人的专用相机
+        isAiming = on; //isAiming Unused
     }
 
+    // Unused
     IEnumerator RecenterCamera()
     {
         gameCam.GetComponent<CinemachineFreeLook>().m_RecenterToTargetHeading.m_enabled = true;
@@ -305,6 +324,14 @@ public class TacticalModeScript : MonoBehaviour
         gameCam.GetComponent<CinemachineFreeLook>().m_RecenterToTargetHeading.m_enabled = false;
     }
 
+    /// <summary>
+    /// 播放特效
+    /// </summary>
+    /// <param name="visualEffect"></param>
+    /// <param name="shakeCamera"></param>
+    /// <param name="shakeAmplitude"></param>
+    /// <param name="shakeFrequency"></param>
+    /// <param name="shakeSustain"></param>
     public void PlayVFX(VisualEffect visualEffect, bool shakeCamera, float shakeAmplitude = 2, float shakeFrequency = 2, float shakeSustain = .2f)
     {
         if (visualEffect == abilityHitVFX)
